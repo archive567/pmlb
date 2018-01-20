@@ -1,0 +1,79 @@
+name: pmlb
+version: '0.0.1'
+synopsis: See readme.md
+description: See readme.md for description.
+category: project
+author: Tony Day
+maintainer: tonyday567@gmail.com
+copyright: Tony Day (c) 2017
+license: BSD3
+github: tonyday567/pmlb
+extra-source-files:
+- other/lhs.css
+- other/header.md
+- other/footer.md
+default-extensions:
+- BangPatterns
+- BinaryLiterals
+- DeriveFoldable
+- DeriveFunctor
+- DeriveGeneric
+- DeriveTraversable
+- DisambiguateRecordFields
+- EmptyCase
+- FlexibleContexts
+- FlexibleInstances
+- FunctionalDependencies
+- GADTSyntax
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- MonadComprehensions
+- MultiParamTypeClasses
+- MultiWayIf
+- NegativeLiterals
+- NoImplicitPrelude
+- OverloadedStrings
+- ParallelListComp
+- PartialTypeSignatures
+- PatternSynonyms
+- RankNTypes
+- RecordWildCards
+- RecursiveDo
+- ScopedTypeVariables
+- TupleSections
+- TypeFamilies
+- TypeOperators
+- UnicodeSyntax
+dependencies:
+- base >=4.7 && <5
+executables:
+  pmlb-example:
+    main: example.hs
+    source-dirs: app
+    ghc-options:
+    - -funbox-strict-fields
+    - -fforce-recomp
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - protolude
+    - optparse-generic
+    - data-default
+    - lens
+    - generic-lens >= 0.5.1.0
+    - generic-lens-labels
+    - Frames
+tests:
+  test:
+    main: test.hs
+    source-dirs: test
+    dependencies:
+    - HUnit
+    - QuickCheck
+    - doctest
+    - protolude
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck
