@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
@@ -23,6 +24,13 @@ import qualified Data.ByteString.Streaming.Char8 as B
 import qualified Data.ByteString.Streaming.HTTP as HTTP
 import qualified Data.Text as Text
 import qualified Streaming.Prelude as S
+import qualified Pipes.Prelude as P
+import qualified Pipes as P
+import Frames.CSV
+-- import Data.Vinyl
+import Frames.ColumnTypeable
+import qualified Pipes.Prelude.Text as PT
+import Frames.ColumnUniverse
 
 data SetType = Classification | Regression deriving (Show, Generic, Eq, Read, ParseField)
 
@@ -30,15 +38,16 @@ show' :: SetType -> Text
 show' Classification = "classification"
 show' Regression = "regression"
 
-data Caching = UseLocal | UseRemote deriving (Show, Generic, Eq)
-
 data Config = Config
   { githubUrl :: Text
   , dataType :: SetType
   , dataSet :: Text
-  , suffix :: Text
-  , useCache :: Caching
+  , suffixRemote :: Text
+  , suffixLocal :: Text
+    -- ^ data is stored uncompressed locally to fit in with Frames methods
+    -- since a csv file is needed locally to discover types, remote data is always cached.
   , localCache :: Text
+  , sep :: Text
   } deriving (Show, Generic, Eq)
 
 instance Default Config where
@@ -48,23 +57,23 @@ instance Default Config where
     Classification
     "Hill_Valley_with_noise"
     ".tsv.gz"
-    UseLocal
+    ".csv"
     "./other"
+    "\t"
 
 instance ParseRecord (Opts Wrapped)
 
 url :: Config -> FilePath
-url (Config gh dt ds s _ _) = Text.unpack $ gh <> "/" <> show' dt <> "/" <> ds <> "/" <> ds <> s
+url (Config gh dt ds rsuff _  _ _) = Text.unpack $ gh <> "/" <> show' dt <> "/" <> ds <> "/" <> ds <> rsuff
 
 file :: Config -> FilePath
-file (Config _ dt ds s _ lc) = Text.unpack $ lc <> "/" <> show' dt <> "/" <> ds <> s
+file (Config _ dt ds _ lsuff lc _) = Text.unpack $ lc <> "/" <> show' dt <> "/" <> ds <> lsuff
 
 -- | command line options
 data Opts w = Opts
   { datatype :: w ::: Maybe SetType <?> "classification or regression"
   , dataset :: w ::: Maybe Text <?> "dataset to download" 
   } deriving (Generic)
-
 
 -- | resources
 withUrlStream :: String -> Managed (B.ByteString IO ())
@@ -84,27 +93,27 @@ toCache :: Config -> IO ()
 toCache cfg = runManaged $ do
     inUrl <- withUrlStream (url cfg)
     outFile <- withFileAppend (file cfg)
-    liftIO $ inUrl & B.hPut outFile
+    liftIO $ inUrl & gunzip & B.hPut outFile
 
 cacheUrl :: Config -> IO ()
-cacheUrl cfg = case useCache cfg of
-  UseLocal -> do
+cacheUrl cfg = do
       e <- doesFileExist $ file cfg
       when (not e) (toCache cfg)
-  UseRemote -> pure ()
 
 withStream :: Config -> Managed (B.ByteString IO ())
-withStream cfg = 
-    case useCache cfg of
-      UseRemote -> withUrlStream (url cfg)
-      UseLocal -> do
-          liftIO $ cacheUrl cfg
-          withFileStream (file cfg)
+withStream cfg = do
+    liftIO $ cacheUrl cfg
+    withFileStream (file cfg)
 
+-- | main processing
+withBS :: Config -> (B.ByteString IO () -> IO r) -> IO r
+withBS cfg = with (withStream cfg)
 
--- | main process
-run :: Config -> (B.ByteString IO () -> IO r) -> IO r
-run cfg s = with (withStream cfg) $ s . gunzip
+withLineStream :: Config -> (S.Stream (S.Of Text) IO () -> IO r) -> IO r
+withLineStream cfg s = withBS cfg $ s . lineStream 100000
+
+withProducer :: Config -> (P.Producer Text IO () -> IO r) -> IO r
+withProducer cfg p = withLineStream cfg $ p . P.unfoldr S.next 
 
 -- * different processings
 
@@ -136,6 +145,19 @@ lines :: Int -> B.ByteString IO () -> IO [Text]
 lines n s =
     s & lineStream n & S.toList_
 
+
+-- * csv discovery
+cfgRowGen :: Config -> RowGen a
+cfgRowGen cfg = RowGen [] "" (sep cfg) "Row" Proxy (PT.readFileLn (file cfg))
+
+tableType' (RowGen [] "" "\t" "Row" Proxy (PT.readFileLn "other/classification/Hill_Valley_with_noise.csv") :: RowGen Columns)
+
+readRows :: (Monad m) => Config -> P.Producer Text m () -> m [Row]
+readRows cfg p = P.toListM $ p P.>-> pipeTableOpt (ParserOptions Nothing (sep cfg) NoQuoting)
+
+readCols :: (Monad m, Monoid a, ColumnTypeable a) => P.Producer Text m () -> m [(Text, a)]
+readCols p = p & readColHeaders (ParserOptions Nothing "\t" NoQuoting)
+
 main :: IO ()
 main = do
   o :: Opts Unwrapped <- unwrapRecord "pmlb"
@@ -143,7 +165,7 @@ main = do
   let dt = fromMaybe (dataType def) (datatype o)
   let cfg = #dataSet .~ ds $ #dataType .~ dt $ def
   let process = lines 2
-  res <- run cfg process
+  res <- withBS cfg process
   putStrLn (show res <> " 👍" :: Text)
   writeFile
     "other/uptohere.md"
@@ -156,9 +178,16 @@ codeWrap :: [Text] -> Text
 codeWrap ts = "\n```\n" <> Text.intercalate "\n" ts <> "\n```\n"
 
 -- | doctests
--- >>> run def bytes
+-- >>> withBS def bytes
 -- "byte length 839165"
 --
--- >>> run def lineCount
+-- >>> withLineStream def (fmap S.fst' . S.length)
 -- 1213
+--
+-- >>> rs <- withProducer def (readRows def)
+-- >>> :t rs
+-- rs :: [Row]
+--
+-- >>> length rs
+-- 1212
 --

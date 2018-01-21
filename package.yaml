@@ -74,6 +74,10 @@ executables:
     - filepath
     - directory
     - managed
+    - pipes
+    - vinyl
+    - pipes-safe
+    - pipes-text
 tests:
   test:
     main: test.hs

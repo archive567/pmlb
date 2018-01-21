@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 390bc0c74c2e49ef6024ab71d303769251ad1621d5ecc7a17fb27d348d580c81
+-- hash: d91f7d624b7f507f36c08886398cb2e96c2604ebc1c99b07d2b4e9b1f45a20eb
 
 name:           pmlb
 version:        0.0.1
@@ -46,11 +46,15 @@ executable pmlb-app
     , lens
     , managed
     , optparse-generic
+    , pipes
+    , pipes-safe
+    , pipes-text
     , protolude
     , streaming
     , streaming-bytestring
     , streaming-utils
     , text
+    , vinyl
     , zlib
   other-modules:
       Paths_pmlb
