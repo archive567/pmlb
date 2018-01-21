@@ -2,10 +2,10 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d91f7d624b7f507f36c08886398cb2e96c2604ebc1c99b07d2b4e9b1f45a20eb
+-- hash: 3ba7de39db4f4187472eb3c75a420007272cf380b132cc4f75ac85dfbc7cb38b
 
 name:           pmlb
-version:        0.0.1
+version:        0.0.0.1
 synopsis:       See readme.md
 description:    See readme.md for description.
 category:       project
@@ -28,14 +28,14 @@ source-repository head
   type: git
   location: https://github.com/tonyday567/pmlb
 
-executable pmlb-app
-  main-is: app.hs
+library
   hs-source-dirs:
-      app
+      src
   default-extensions: BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals NoImplicitPrelude OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators UnicodeSyntax
-  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -funbox-strict-fields -fforce-recomp
   build-depends:
       Frames
+    , QuickCheck
     , base >=4.7 && <5
     , bytestring
     , data-default
@@ -56,6 +56,43 @@ executable pmlb-app
     , text
     , vinyl
     , zlib
+  exposed-modules:
+      PMLB.DataSets
+      PMLB.Config
+  other-modules:
+      Paths_pmlb
+  default-language: Haskell2010
+
+executable pmlb-app
+  main-is: app.hs
+  hs-source-dirs:
+      app
+  default-extensions: BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals NoImplicitPrelude OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators UnicodeSyntax
+  ghc-options: -funbox-strict-fields -fforce-recomp -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      Frames
+    , QuickCheck
+    , base >=4.7 && <5
+    , bytestring
+    , data-default
+    , directory
+    , filepath
+    , generic-lens >=0.5.1.0
+    , generic-lens-labels
+    , lens
+    , managed
+    , optparse-generic
+    , pipes
+    , pipes-safe
+    , pipes-text
+    , pmlb
+    , protolude
+    , streaming
+    , streaming-bytestring
+    , streaming-utils
+    , text
+    , vinyl
+    , zlib
   other-modules:
       Paths_pmlb
   default-language: Haskell2010
@@ -67,14 +104,33 @@ test-suite test
       test
   default-extensions: BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals NoImplicitPrelude OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators UnicodeSyntax
   build-depends:
-      HUnit
+      Frames
+    , HUnit
     , QuickCheck
     , base >=4.7 && <5
+    , bytestring
+    , data-default
+    , directory
     , doctest
+    , filepath
+    , generic-lens >=0.5.1.0
+    , generic-lens-labels
+    , lens
+    , managed
+    , optparse-generic
+    , pipes
+    , pipes-safe
+    , pipes-text
     , protolude
+    , streaming
+    , streaming-bytestring
+    , streaming-utils
     , tasty
     , tasty-hunit
     , tasty-quickcheck
+    , text
+    , vinyl
+    , zlib
   other-modules:
       Paths_pmlb
   default-language: Haskell2010

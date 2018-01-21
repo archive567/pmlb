@@ -1,5 +1,5 @@
 name: pmlb
-version: '0.0.1'
+version: '0.0.0.1'
 synopsis: See readme.md
 description: See readme.md for description.
 category: project
@@ -47,6 +47,35 @@ default-extensions:
 - UnicodeSyntax
 dependencies:
 - base >=4.7 && <5
+- QuickCheck
+- protolude
+- optparse-generic
+- data-default
+- lens
+- generic-lens >= 0.5.1.0
+- generic-lens-labels
+- Frames
+- zlib
+- bytestring
+- streaming
+- streaming-bytestring
+- streaming-utils
+- text
+- filepath
+- directory
+- managed
+- pipes
+- vinyl
+- pipes-safe
+- pipes-text
+library:
+  source-dirs: src
+  ghc-options:
+  - -funbox-strict-fields
+  - -fforce-recomp
+  exposed-modules:
+  - PMLB.DataSets
+  - PMLB.Config
 executables:
   pmlb-app:
     main: app.hs
@@ -58,6 +87,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
+    - pmlb
     - protolude
     - optparse-generic
     - data-default
