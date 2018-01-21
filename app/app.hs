@@ -10,18 +10,19 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
+import Control.Lens hiding (Unwrapped, Wrapped)
+import Control.Monad.Managed
+import Data.Default
+import Data.Generics.Labels ()
+import Data.String (String)
 import Options.Generic
 import Protolude
-import Data.Default
-import Control.Lens hiding (Unwrapped, Wrapped)
-import Data.Generics.Labels ()
+import Streaming.Zip
+import System.Directory
 import qualified Data.ByteString.Streaming.Char8 as B
 import qualified Data.ByteString.Streaming.HTTP as HTTP
-import qualified Streaming.Prelude as S
-import Data.String (String)
 import qualified Data.Text as Text
-import System.Directory
-import Control.Monad.Managed
+import qualified Streaming.Prelude as S
 
 data SetType = Classification | Regression deriving (Show, Generic, Eq, Read, ParseField)
 
@@ -30,11 +31,6 @@ show' Classification = "classification"
 show' Regression = "regression"
 
 data Caching = UseLocal | UseRemote deriving (Show, Generic, Eq)
-
-data Opts w = Opts
-  { datatype :: w ::: Maybe SetType <?> "classification or regression"
-  , dataset :: w ::: Maybe Text <?> "dataset to download" 
-  } deriving (Generic)
 
 data Config = Config
   { githubUrl :: Text
@@ -63,14 +59,14 @@ url (Config gh dt ds s _ _) = Text.unpack $ gh <> "/" <> show' dt <> "/" <> ds <
 file :: Config -> FilePath
 file (Config _ dt ds s _ lc) = Text.unpack $ lc <> "/" <> show' dt <> "/" <> ds <> s
 
-withStream :: Config -> Managed (B.ByteString IO ())
-withStream cfg = 
-    case useCache cfg of
-      UseRemote -> withUrlStream (url cfg)
-      UseLocal -> do
-          liftIO $ cacheUrl cfg
-          withFileStream (file cfg)
+-- | command line options
+data Opts w = Opts
+  { datatype :: w ::: Maybe SetType <?> "classification or regression"
+  , dataset :: w ::: Maybe Text <?> "dataset to download" 
+  } deriving (Generic)
 
+
+-- | resources
 withUrlStream :: String -> Managed (B.ByteString IO ())
 withUrlStream u = managed $ \f -> do
     req <- HTTP.parseRequest u
@@ -97,13 +93,48 @@ cacheUrl cfg = case useCache cfg of
       when (not e) (toCache cfg)
   UseRemote -> pure ()
 
-run :: Config -> (B.ByteString IO () -> IO r) -> IO r
-run cfg = with (withStream cfg)
+withStream :: Config -> Managed (B.ByteString IO ())
+withStream cfg = 
+    case useCache cfg of
+      UseRemote -> withUrlStream (url cfg)
+      UseLocal -> do
+          liftIO $ cacheUrl cfg
+          withFileStream (file cfg)
 
-len :: B.ByteString IO () -> IO Text
-len s = do
+
+-- | main process
+run :: Config -> (B.ByteString IO () -> IO r) -> IO r
+run cfg s = with (withStream cfg) $ s . gunzip
+
+-- * different processings
+
+bytes :: B.ByteString IO () -> IO Text
+bytes s = do
     (l S.:> _) <- s & B.length
     pure $ "byte length " <> show l
+
+lineCount :: B.ByteString IO () -> IO Int
+lineCount s = do
+    (c S.:> _) <- s & lineStream 100000 & S.length
+    pure c
+
+-- * different streams
+
+-- | take a ByteString (A streaming library bytestring) and make a text stream
+lineStream :: Monad m => Int -> B.ByteString m r -> S.Stream (S.Of Text) m ()
+lineStream n s =
+    s &
+    B.lines &
+    B.denull &
+    S.take n &
+    S.mapped B.toStrict & -- the strict wall of pain
+    S.map decodeUtf8 &
+    -- S.concat &
+    S.filter (/="")
+
+lines :: Int -> B.ByteString IO () -> IO [Text]
+lines n s =
+    s & lineStream n & S.toList_
 
 main :: IO ()
 main = do
@@ -111,7 +142,7 @@ main = do
   let ds = fromMaybe (dataSet def) (dataset o)
   let dt = fromMaybe (dataType def) (datatype o)
   let cfg = #dataSet .~ ds $ #dataType .~ dt $ def
-  let process = len
+  let process = lines 2
   res <- run cfg process
   putStrLn (show res <> " 👍" :: Text)
   writeFile
@@ -121,10 +152,13 @@ main = do
       "\n" <> "process result:" <>
       codeWrap res)
 
-codeWrap :: Text -> Text
-codeWrap t = "\n```\n" <> t <> "\n```\n"
+codeWrap :: [Text] -> Text
+codeWrap ts = "\n```\n" <> Text.intercalate "\n" ts <> "\n```\n"
 
 -- | doctests
--- >>> run def len
--- "byte length 354224"
+-- >>> run def bytes
+-- "byte length 839165"
+--
+-- >>> run def lineCount
+-- 1213
 --

@@ -5,8 +5,9 @@ pmlb
 
 The PMBL benchmark suite for machine learning
 
-- [paper](https://arxiv.org/pdf/1703.00512.pdf)
-- [github repo](https://github.com/EpistasisLab/penn-ml-benchmarks)
+- [paper: PMLB: A Large Benchmark Suite for Machine Learning
+Evaluation and Comparison](https://arxiv.org/pdf/1703.00512.pdf)
+- [PMLB repo](https://github.com/EpistasisLab/penn-ml-benchmarks)
 
 
 
@@ -35,3 +36,7 @@ reference
 - [optparse-generic](https://www.stackage.org/package/optparse-generic)
 - [hoogle](https://www.stackage.org/package/hoogle)
 - [doctest](https://www.stackage.org/package/doctest)
+- [managed](https://www.stackage.org/package/managed) 
+- [streaming](https://www.stackage.org/package/streaming) 
+- [streaming-utils](https://www.stackage.org/package/streaming-utils) 
+- [streaming-bytestring](https://www.stackage.org/package/streaming-bytestring) 
