@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0140581d8360cf7698b03b97f05ba324319bcb3100cff9aaa041fb536e506c4d
+-- hash: 390bc0c74c2e49ef6024ab71d303769251ad1621d5ecc7a17fb27d348d580c81
 
 name:           pmlb
 version:        0.0.1
@@ -28,8 +28,8 @@ source-repository head
   type: git
   location: https://github.com/tonyday567/pmlb
 
-executable pmlb-example
-  main-is: example.hs
+executable pmlb-app
+  main-is: app.hs
   hs-source-dirs:
       app
   default-extensions: BangPatterns BinaryLiterals DeriveFoldable DeriveFunctor DeriveGeneric DeriveTraversable DisambiguateRecordFields EmptyCase FlexibleContexts FlexibleInstances FunctionalDependencies GADTSyntax InstanceSigs KindSignatures LambdaCase MonadComprehensions MultiParamTypeClasses MultiWayIf NegativeLiterals NoImplicitPrelude OverloadedStrings ParallelListComp PartialTypeSignatures PatternSynonyms RankNTypes RecordWildCards RecursiveDo ScopedTypeVariables TupleSections TypeFamilies TypeOperators UnicodeSyntax
@@ -37,12 +37,21 @@ executable pmlb-example
   build-depends:
       Frames
     , base >=4.7 && <5
+    , bytestring
     , data-default
+    , directory
+    , filepath
     , generic-lens >=0.5.1.0
     , generic-lens-labels
     , lens
+    , managed
     , optparse-generic
     , protolude
+    , streaming
+    , streaming-bytestring
+    , streaming-utils
+    , text
+    , zlib
   other-modules:
       Paths_pmlb
   default-language: Haskell2010

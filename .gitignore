@@ -1,2 +1,6 @@
 /.stack-work/
 TAGS
+other/classification/*.tsv
+other/regression/*.tsv
+/other/uptohere.md
+/other/.DS_Store

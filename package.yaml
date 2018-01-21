@@ -48,8 +48,8 @@ default-extensions:
 dependencies:
 - base >=4.7 && <5
 executables:
-  pmlb-example:
-    main: example.hs
+  pmlb-app:
+    main: app.hs
     source-dirs: app
     ghc-options:
     - -funbox-strict-fields
@@ -65,6 +65,15 @@ executables:
     - generic-lens >= 0.5.1.0
     - generic-lens-labels
     - Frames
+    - zlib
+    - bytestring
+    - streaming
+    - streaming-bytestring
+    - streaming-utils
+    - text
+    - filepath
+    - directory
+    - managed
 tests:
   test:
     main: test.hs

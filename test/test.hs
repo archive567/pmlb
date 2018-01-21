@@ -8,7 +8,7 @@ import Test.DocTest
 
 main :: IO ()
 main = do
-    doctest ["app/example.hs"]
+    doctest ["app/app.hs"]
     defaultMain tests
 
 tests :: TestTree

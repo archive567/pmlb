@@ -1,0 +1,31 @@
+<meta charset="utf-8"> <link rel="stylesheet" href="other/lhs.css">
+<script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<h1 id="pmlb">pmlb</h1>
+<p><a href="https://travis-ci.org/tonyday567/pmlb"><img src="https://travis-ci.org/tonyday567/pmlb.svg" alt="Build Status" /></a> <a href="https://hackage.haskell.org/package/pmlb"><img src="https://img.shields.io/hackage/v/pmlb.svg" alt="Hackage" /></a> <a href="http://stackage.org/lts/package/pmlb"><img src="https://www.stackage.org/package/pmlb/badge/lts" alt="lts" /></a> <a href="http://stackage.org/nightly/package/pmlb"><img src="https://www.stackage.org/package/pmlb/badge/nightly" alt="nightly" /></a></p>
+<p>The PMBL benchmark suite for machine learning</p>
+<ul class="incremental">
+<li><a href="https://arxiv.org/pdf/1703.00512.pdf">paper</a></li>
+<li><a href="https://github.com/EpistasisLab/penn-ml-benchmarks">github repo</a></li>
+</ul>
+<h2 id="uptohere">uptohere</h2>
+<p>last dataset used: <a href="https://github.com/EpistasisLab/penn-ml-benchmarks/raw/master/datasets/classification/Hill_Valley_with_noise/Hill_Valley_with_noise.tsv.gz">Hill_Valley_with_noise</a></p>
+<p>process result:</p>
+<pre><code>byte length 354224</code></pre>
+<h2 id="recipe">recipe</h2>
+<pre><code>stack build --test --exec &quot;$(stack path --local-install-root)/bin/pmlb-app&quot; --exec &quot;$(stack path --local-bin)/pandoc -f markdown -i other/header.md app/readme.md other/footer.md -t html -o index.html --filter pandoc-include --mathjax&quot; --exec &quot;$(stack path --local-bin)/pandoc -f markdown -i app/readme.md -t markdown -o readme.md --filter pandoc-include --mathjax&quot; --file-watch</code></pre>
+<h2 id="reference">reference</h2>
+<ul class="incremental">
+<li><a href="https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/flags.html#flag-reference">ghc options</a></li>
+<li><a href="https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/lang.html">pragmas</a></li>
+<li><a href="https://www.stackage.org/">libraries</a></li>
+<li><a href="https://www.stackage.org/package/protolude">protolude</a></li>
+<li><a href="https://www.stackage.org/package/optparse-generic">optparse-generic</a></li>
+<li><a href="https://www.stackage.org/package/hoogle">hoogle</a></li>
+<li><a href="https://www.stackage.org/package/doctest">doctest</a></li>
+</ul>
+<hr />
+<div class="footer">
+<p>Powered by <a href="https://haskell-lang.org/">haskell</a>, <a href="https://docs.haskellstack.org/en/stable/README/">stack</a> and <a href="http://pandoc.org/">pandoc</a>.</p>
+</div>

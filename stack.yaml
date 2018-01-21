@@ -8,3 +8,10 @@ extra-deps:
     commit: 876ad15282e2ea5e5d77e3eae4c4a2bba77bd81a
   - git: https://github.com/tonyday567/generic-lens-labels.git
     commit: 268482be078e543c1f8fef33ae8ceabc7a201f8b
+  - streaming-utils-0.1.4.7
+  - aeson-1.1.2.0
+  - attoparsec-0.13.1.0
+  - streaming-0.1.4.5
+  - streaming-bytestring-0.1.4.6
+  - streaming-commons-0.1.17
+  - mmorph-1.0.9

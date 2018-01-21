@@ -5,25 +5,24 @@ pmlb
 
 The PMBL benchmark suite for machine learning
 
-https://arxiv.org/pdf/1703.00512.pdf
-
-https://github.com/EpistasisLab/penn-ml-benchmarks
-
+- [paper](https://arxiv.org/pdf/1703.00512.pdf)
+- [github repo](https://github.com/EpistasisLab/penn-ml-benchmarks)
 
 
 
-results
+
+uptohere
 ---
 
 ```include
-other/results.md
+other/uptohere.md
 ```
 
 recipe
 ---
 
 ```
-stack build --test --exec "$(stack path --local-install-root)/bin/pmlb-example" --exec "$(stack path --local-bin)/pandoc -f markdown -i other/header.md app/example.md other/footer.md -t html -o index.html --filter pandoc-include --mathjax" --exec "$(stack path --local-bin)/pandoc -f markdown -i app/example.md -t markdown -o readme.md --filter pandoc-include --mathjax" --file-watch
+stack build --test --exec "$(stack path --local-install-root)/bin/pmlb-app" --exec "$(stack path --local-bin)/pandoc -f markdown -i other/header.md app/readme.md other/footer.md -t html -o index.html --filter pandoc-include --mathjax" --exec "$(stack path --local-bin)/pandoc -f markdown -i app/readme.md -t markdown -o readme.md --filter pandoc-include --mathjax" --file-watch
 ```
 
 reference
