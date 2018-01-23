@@ -13,69 +13,41 @@ extra-source-files:
 - other/header.md
 - other/footer.md
 default-extensions:
-- BangPatterns
-- BinaryLiterals
-- DeriveFoldable
-- DeriveFunctor
-- DeriveGeneric
-- DeriveTraversable
-- DisambiguateRecordFields
-- EmptyCase
-- FlexibleContexts
-- FlexibleInstances
-- FunctionalDependencies
-- GADTSyntax
-- InstanceSigs
-- KindSignatures
-- LambdaCase
-- MonadComprehensions
-- MultiParamTypeClasses
-- MultiWayIf
 - NegativeLiterals
 - NoImplicitPrelude
 - OverloadedStrings
-- ParallelListComp
-- PartialTypeSignatures
-- PatternSynonyms
-- RankNTypes
-- RecordWildCards
-- RecursiveDo
-- ScopedTypeVariables
-- TupleSections
-- TypeFamilies
-- TypeOperators
 - UnicodeSyntax
 dependencies:
 - base >=4.7 && <5
-- QuickCheck
-- protolude
-- optparse-generic
-- data-default
-- lens
-- generic-lens >= 0.5.1.0
-- generic-lens-labels
-- Frames
-- zlib
-- bytestring
-- streaming
-- streaming-bytestring
-- streaming-utils
-- text
-- filepath
-- directory
-- managed
-- pipes
-- vinyl
-- pipes-safe
-- pipes-text
 library:
   source-dirs: src
   ghc-options:
   - -funbox-strict-fields
   - -fforce-recomp
   exposed-modules:
+  - PMLB
   - PMLB.DataSets
-  - PMLB.Config
+  - PMLB.Csv
+  - PMLB.TH
+  dependencies:
+  - Frames
+  - QuickCheck
+  - attoparsec
+  - bytestring
+  - data-default
+  - directory
+  - flow
+  - generic-lens-labels
+  - lens
+  - managed
+  - optparse-generic
+  - pipes
+  - pipes-text
+  - protolude
+  - streaming
+  - streaming-bytestring
+  - streaming-utils
+  - text
 executables:
   pmlb-app:
     main: app.hs
@@ -88,35 +60,21 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - pmlb
-    - protolude
-    - optparse-generic
+    - QuickCheck
     - data-default
-    - lens
-    - generic-lens >= 0.5.1.0
+    - flow
+    - formatting
     - generic-lens-labels
-    - Frames
-    - zlib
-    - bytestring
+    - lens
+    - optparse-generic
+    - protolude
     - streaming
-    - streaming-bytestring
-    - streaming-utils
     - text
-    - filepath
-    - directory
-    - managed
-    - pipes
-    - vinyl
-    - pipes-safe
-    - pipes-text
 tests:
   test:
     main: test.hs
     source-dirs: test
     dependencies:
-    - HUnit
-    - QuickCheck
     - doctest
-    - protolude
     - tasty
-    - tasty-hunit
-    - tasty-quickcheck
+    - protolude

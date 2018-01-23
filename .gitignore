@@ -6,3 +6,4 @@ other/regression/*.tsv
 /other/.DS_Store
 /.DS_Store
 /other/classification/Hill_Valley_with_noise.csv
+/src/PMLB/.DS_Store
