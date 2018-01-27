@@ -27,6 +27,7 @@ module PMLB.Csv
   , toSkips
   , cols
   , parseCols
+  , streamCsv_
   ) where
 
 import Data.Attoparsec.ByteString.Char8 as AC
@@ -223,6 +224,19 @@ parseCsvBody_ :: Monad m
   -> m [a]
 parseCsvBody_ n c p bs = bs |> parsed (p c) |> S.take n |> S.toList_
 
+-- | run a stream computation over n rows of the body of a csv
+-- >>> streamCsvBody_ 2 ',' doubles S.toList_ (B.fromStrict "0,1\n2,3\n4,5\n")
+-- [[0.0,1.0],[2.0,3.0]]
+--
+streamCsvBody_ :: Monad m
+  => Int
+  -> Char
+  -> (Char -> Parser a)
+  -> (S.Stream (S.Of a) m () -> b)
+  -> B.ByteString m r
+  -> b
+streamCsvBody_ n c p s bs = bs |> parsed (p c) |> S.take n |> s
+
 -- | skip over a header row
 skipHead :: Monad m => Char -> B.ByteString m r -> m (B.ByteString m r)
 skipHead c bs = bs |> S.parse (record c) |> fmap snd
@@ -268,6 +282,25 @@ parseCsv_ h n c p bs =
       bs' <- skipHead c bs
       parseCsvBody_ n c p bs'
     NoHeader -> parseCsvBody_ n c p bs
+
+-- | run a stream computation over n rows of a csv, skipping a header row, if one exists, bypassing all errors
+-- >>>  streamCsv_ HasHeader 2 ',' doubles S.toList_ (B.fromStrict "h1,h2\n0,1\n2,3\n4,5\n")
+-- [[0.0,1.0],[2.0,3.0]]
+--
+streamCsv_ :: Monad m
+  => Header
+  -> Int
+  -> Char
+  -> (Char -> Parser a)
+  -> (S.Stream (S.Of a) m () -> m b)
+  -> B.ByteString m r
+  -> m b
+streamCsv_ h n c p s bs =
+  case h of
+    HasHeader -> do
+      bs' <- skipHead c bs
+      streamCsvBody_ n c p s bs'
+    NoHeader -> streamCsvBody_ n c p s bs
 
 -- | compression helper for a list of indexes
 data Skippy = Skip Int | Retain Int deriving (Show)

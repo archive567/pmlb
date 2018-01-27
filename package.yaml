@@ -51,6 +51,8 @@ library:
   - text
   - scientific
   - distributive
+  - numhask-range
+  - numhask
 executables:
   pmlb-app:
     main: app.hs
@@ -73,6 +75,8 @@ executables:
     - protolude
     - streaming
     - text
+    - numhask-range
+    - numhask
 tests:
   test:
     main: test.hs

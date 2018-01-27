@@ -10,3 +10,4 @@ other/regression/*.tsv
 /.projectile
 other/classification
 other/regression
+/pmlb.cabal

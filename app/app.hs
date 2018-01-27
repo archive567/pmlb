@@ -9,7 +9,7 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-import Control.Lens hiding (Unwrapped, Wrapped, (.>), (<|), (|>))
+import Control.Lens hiding (Unwrapped, Wrapped, (.>), (<|), (|>), runFold)
 import Data.Default
 import Data.Generics.Labels ()
 import Flow
@@ -20,7 +20,8 @@ import Protolude hiding ((%))
 import Test.QuickCheck
 import qualified Data.Text as Text
 import qualified Streaming.Prelude as S
-
+import PMLB.Csv
+import NumHask.Range
 instance ParseRecord (Opts Wrapped)
 
 -- $setup
@@ -69,6 +70,8 @@ main = do
   let cfg = def |> #dataSet .~ ds |> #dataType .~ dt
   res <- S.take 5 .> S.toList_ |> runLine cfg
   recs <- runBS arb (bsCheck def 1000)
+  hs <- runBS arb (parseCsvHeader_ (arb ^. #csep) (arb ^. #errStream))
+  ranges <- runFold arb 1000 doubles rangeFold
   putStrLn (ds <> " 👍" :: Text)
   writeFile "other/uptohere.md" <| Text.unlines <|
     [ "random dataset:"
@@ -81,8 +84,17 @@ main = do
     , show recs
     , ""
     , "first few lines:"
-    ] <> codeWrap res
+    ] <> codeWrap res <>
+    [ ""
+    , "ranges"
+    ] <> codeWrap
+    [ tabify (["column:"] <> hs)
+    , tabify (["min:"] <> (show <$> (\(Range l _) -> l) <$> ranges))
+    , tabify (["max:"] <> (show <$> (\(Range _ u) -> u) <$> ranges))
+    ]
 
 codeWrap :: [Text] -> [Text]
 codeWrap ts = ["", "```"] <> ts <> ["```", ""]
 
+tabify :: [Text] -> Text
+tabify = Text.intercalate "\t"

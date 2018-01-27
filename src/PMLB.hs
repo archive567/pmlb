@@ -20,26 +20,32 @@ module PMLB
   , runBS
   , runLine
   , runProducer
+  , runRows
   , toLineStream
   , bytes
   , bsCheck
+  , rangeFold
+  , runFold
   , module Data.Default
   ) where
 
-import Control.Lens hiding (Unwrapped, Wrapped, (.>), (|>), elements)
+import Control.Lens hiding (Unwrapped, Wrapped, (.>), (|>), elements, runFold)
 import Control.Monad.Managed (Managed, managed, runManaged, with)
--- import Data.Attoparsec.ByteString.Streaming (Message, parsed)
 import Data.Default (Default(..))
 import Data.Generics.Labels ()
+import Data.Scientific
 import Data.String (String)
 import Flow ((.>), (|>))
+import NumHask.Prelude
+import NumHask.Range
 import Options.Generic (ParseField)
-import PMLB.DataSets
 import PMLB.Csv
-import Protolude
+import PMLB.DataSets
 import Streaming.Zip (gunzip)
 import System.Directory (doesFileExist)
 import Test.QuickCheck (Arbitrary(..), elements, frequency)
+import qualified Control.Foldl as L
+import qualified Data.Attoparsec.ByteString.Char8 as AC
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString.Streaming.Char8 as B
 import qualified Data.ByteString.Streaming.HTTP as HTTP
@@ -47,10 +53,6 @@ import qualified Data.Text as Text
 import qualified Pipes as P
 import qualified Pipes.Prelude as P
 import qualified Streaming.Prelude as S
--- import Data.Attoparsec.ByteString.Streaming
-import Data.Scientific
--- import qualified Data.Attoparsec.ByteString.Char8 as AC
--- import qualified Control.Foldl as L
 
 data SetType
   = Classification
@@ -172,6 +174,20 @@ runLine cfg s = toLineStream (cfg ^. #maxLines) .> s |> runBS cfg
 runProducer :: Config -> (P.Producer Text IO () -> IO r) -> IO r
 runProducer cfg p = P.unfoldr S.next .> p |> runLine cfg
 
+-- | taking a parser, run a stream computation over n rows
+-- >>> runRows def 2 doubles S.toList_ |> fmap (fmap (take 4))
+-- [[39.02,36.49,38.2,38.85],[1.83,1.71,1.77,1.77]]
+--
+runRows :: Config -> Int -> (Char -> AC.Parser a) -> (S.Stream (S.Of a) IO () -> IO r) -> IO r
+runRows cfg n p s = runBS cfg (streamCsv_ HasHeader n (cfg ^. #csep) p s)
+
+-- | taking a parser, run a foldl over n rows
+-- >>> runFold def 1000 doubles rangeFold |> fmap (drop 95)
+-- [Range 0.89 112037.22,Range 0.89 115110.42,Range 0.86 116431.96,Range 0.91 113291.96,Range 0.89 114533.76,Range 0.0 1.0]
+--
+runFold :: Config -> Int -> (Char -> AC.Parser a) -> L.Fold a b -> IO b
+runFold cfg n p f = runBS cfg (streamCsv_ HasHeader n (cfg ^. #csep) p (L.purely S.fold f .> fmap S.fst'))
+
 -- * various computation streams
 -- | number of raw bytes
 bytes :: B.ByteString IO () -> IO Int
@@ -242,5 +258,11 @@ toV s = case floatingOrInteger s of
   Right i -> Discrete i
 
 -- fromNames :: [Text] -> Map.Map Text Int
+
+rangeFold :: (BoundedField a, Ord a, FromInteger a) => L.Fold [a] [Range a]
+rangeFold = L.Fold step [] identity
+  where
+    step [] as = (\a -> Range a a) <$> as
+    step rs as = zipWith (<>) rs $ (\a -> Range a a) <$> as
 
 
