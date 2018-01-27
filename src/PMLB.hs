@@ -26,6 +26,7 @@ module PMLB
   , bsCheck
   , rangeFold
   , runFold
+  , discreteFreqCounts
   , module Data.Default
   ) where
 
@@ -53,6 +54,8 @@ import qualified Data.Text as Text
 import qualified Pipes as P
 import qualified Pipes.Prelude as P
 import qualified Streaming.Prelude as S
+import qualified Data.Map as Map
+import qualified Data.Attoparsec.ByteString.Streaming as S
 
 data SetType
   = Classification
@@ -73,6 +76,8 @@ data Config = Config
   -- ^ length of the continuating bytestream to report on an error
   , maxLines :: Int
   -- ^ maximum number of lines when splitting the stream
+  , firstRows :: Int
+  -- ^ number of rows to get initial statistical calcs with
   } deriving (Show, Generic, Eq)
 
 instance Default Config where
@@ -87,6 +92,7 @@ instance Default Config where
       '\t'
       500
       100000
+      100
 
 url :: Config -> FilePath
 url cfg =
@@ -257,6 +263,11 @@ toV s = case floatingOrInteger s of
   Left r -> Continuous r
   Right i -> Discrete i
 
+isDiscrete :: V -> Bool
+isDiscrete (Discrete _) = True
+isDiscrete (Continuous _) = False
+isDiscrete (Binary _) = False
+
 -- fromNames :: [Text] -> Map.Map Text Int
 
 rangeFold :: (BoundedField a, Ord a, FromInteger a) => L.Fold [a] [Range a]
@@ -265,4 +276,29 @@ rangeFold = L.Fold step [] identity
     step [] as = (\a -> Range a a) <$> as
     step rs as = zipWith (<>) rs $ (\a -> Range a a) <$> as
 
+discreteCols :: Config -> Int -> IO [Int]
+discreteCols cfg n = do
+  rs <- runBS cfg (parseCsv_ HasHeader n (cfg ^. #csep) scis)
+  rs |> transpose |> fmap (all (isDiscrete . toV))
+     |> zip [0..] |> filter snd |> fmap fst |> pure
 
+countFold :: (Ord a) => L.Fold a (Map.Map a Int)
+countFold = L.Fold step Map.empty identity
+  where
+    step x a = Map.insertWith (+) a 1 x
+
+countsFold :: (Ord a) => Int -> L.Fold [a] [Map.Map a Int]
+countsFold n = L.Fold step (replicate n Map.empty) identity
+  where
+    step = zipWith (\x a -> Map.insertWith (+) a 1 x)
+
+nrows :: Config -> IO Int
+nrows cfg = runBS cfg (parseCsvHeader_ (cfg ^. #csep)) |> fmap length
+
+discreteFreqCounts :: Config -> Int -> IO [(Text, [(Scientific, Int)])]
+discreteFreqCounts cfg topn = do
+  nr <- nrows cfg
+  dc <- discreteCols cfg (cfg ^. #firstRows)
+  freqs <- runFold cfg (cfg ^. #maxLines) (cols (const AC.scientific) nr dc) (countsFold nr)
+  (Left hs, _) <- runBS cfg (S.parse (cols field nr dc (cfg ^. #csep)))
+  pure $ zip (decodeUtf8 <$> hs) $ take topn . reverse . sortOn snd . Map.toList <$> freqs

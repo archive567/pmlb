@@ -70,8 +70,9 @@ main = do
   let cfg = def |> #dataSet .~ ds |> #dataType .~ dt
   res <- S.take 5 .> S.toList_ |> runLine cfg
   recs <- runBS arb (bsCheck def 1000)
-  hs <- runBS arb (parseCsvHeader_ (arb ^. #csep) (arb ^. #errStream))
+  hs <- runBS arb (parseCsvHeader_ (arb ^. #csep))
   ranges <- runFold arb 1000 doubles rangeFold
+  freqs <- discreteFreqCounts arb 5
   putStrLn (ds <> " 👍" :: Text)
   writeFile "other/uptohere.md" <| Text.unlines <|
     [ "random dataset:"
@@ -91,7 +92,10 @@ main = do
     [ tabify (["column:"] <> hs)
     , tabify (["min:"] <> (show <$> (\(Range l _) -> l) <$> ranges))
     , tabify (["max:"] <> (show <$> (\(Range _ u) -> u) <$> ranges))
-    ]
+    ] <>
+    [ "frequency counts for discrete columns"
+    , ""
+    ] <> codeWrap (show <$> freqs)
 
 codeWrap :: [Text] -> [Text]
 codeWrap ts = ["", "```"] <> ts <> ["```", ""]

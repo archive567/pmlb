@@ -53,6 +53,7 @@ library:
   - distributive
   - numhask-range
   - numhask
+  - containers
 executables:
   pmlb-app:
     main: app.hs
@@ -77,6 +78,7 @@ executables:
     - text
     - numhask-range
     - numhask
+    - containers
 tests:
   test:
     main: test.hs

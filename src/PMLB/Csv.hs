@@ -198,15 +198,14 @@ parseCsvHeader c n bs = do
     Left heads -> (decodeUtf8 <$> heads, bs') |> Right |> pure
 
 -- | parse a header row, with no continuation or error checking
--- >>> parseCsvHeader_ ',' 10 (B.fromStrict "h1,h2\n0,1\n")
+-- >>> parseCsvHeader_ ',' (B.fromStrict "h1,h2\n0,1\n")
 -- ["h1","h2"]
 --
 parseCsvHeader_ :: Monad m
   => Char
-  -> Int
   -> B.ByteString m r
   -> m [Text]
-parseCsvHeader_ c n bs = do
+parseCsvHeader_ c bs = do
   (eHeaders, bs') <- bs |> S.parse (record c)
   case eHeaders of
     Right _ -> pure []
