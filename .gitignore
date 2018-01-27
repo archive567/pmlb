@@ -7,3 +7,6 @@ other/regression/*.tsv
 /.DS_Store
 /other/classification/Hill_Valley_with_noise.csv
 /src/PMLB/.DS_Store
+/.projectile
+other/classification
+other/regression

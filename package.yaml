@@ -37,6 +37,7 @@ library:
   - data-default
   - directory
   - flow
+  - foldl
   - generic-lens-labels
   - lens
   - managed
@@ -48,6 +49,8 @@ library:
   - streaming-bytestring
   - streaming-utils
   - text
+  - scientific
+  - distributive
 executables:
   pmlb-app:
     main: app.hs

@@ -16,9 +16,10 @@ import Test.DocTest
 main :: IO ()
 main = do
   doctest
-    [ "src/PMLB.hs"
+    [ "app/app.hs"
+    , "src/PMLB.hs"
     , "src/PMLB/TH.hs"
-    -- , "src/PMLB/Csv.hs"
+    , "src/PMLB/Csv.hs"
     ]
   defaultMain tests
 

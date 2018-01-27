@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module PMLB.DataSets
   ( classificationNames
   , regressionNames
@@ -175,6 +177,7 @@ classificationNames = [
     "yeast"
     ]
 
+regressionNames :: [Text]
 regressionNames = [
     "1027_ESL",
     "1028_SWD",
