@@ -293,7 +293,8 @@ countsFold n = L.Fold step (replicate n Map.empty) identity
     step = zipWith (\x a -> Map.insertWith (+) a 1 x)
 
 nrows :: Config -> IO Int
-nrows cfg = runBS cfg (parseCsvHeader_ (cfg ^. #csep)) |> fmap length
+nrows cfg =
+  runBS cfg (parseCsvHeader_ (cfg ^. #csep)) |> fmap length
 
 discreteFreqCounts :: Config -> Int -> IO [(Text, [(Scientific, Int)])]
 discreteFreqCounts cfg topn = do

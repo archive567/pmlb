@@ -10,9 +10,21 @@ Evaluation and Comparison](https://arxiv.org/pdf/1703.00512.pdf)
 - [PMLB repo](https://github.com/EpistasisLab/penn-ml-benchmarks)
 
 
+To Do:
+===
 
+- quantiles
+- preprocessing
+- normalisation
+- linear regression
+- logistic regression
+- SVM
+- prediction distribution analytics
+- cross-validation schemes
+- grid/parameter search
+- NN
 
-uptohere
+Current State
 ---
 
 ```include
@@ -27,6 +39,9 @@ stack build --test --exec "$(stack path --local-install-root)/bin/pmlb-app" --ex
 ```
 
 reference
+===
+
+haskell
 ---
 
 - [ghc options](https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/flags.html#flag-reference)
@@ -40,3 +55,9 @@ reference
 - [streaming](https://www.stackage.org/package/streaming) 
 - [streaming-utils](https://www.stackage.org/package/streaming-utils) 
 - [streaming-bytestring](https://www.stackage.org/package/streaming-bytestring) 
+
+machine learning
+---
+
+- [bookkeeeping](https://www.eecs.tufts.edu/~dsculley/papers/ml_test_score.pdf)
+
