@@ -9,9 +9,8 @@ copyright: Tony Day (c) 2017
 license: BSD3
 github: tonyday567/pmlb
 extra-source-files:
-- other/lhs.css
-- other/header.md
-- other/footer.md
+- readme.md
+- stack.yaml
 default-extensions:
 - NegativeLiterals
 - NoImplicitPrelude
@@ -34,26 +33,26 @@ library:
   - QuickCheck
   - attoparsec
   - bytestring
+  - containers
   - data-default
   - directory
+  - distributive
   - flow
   - foldl
   - generic-lens-labels
   - lens
   - managed
+  - numhask
+  - numhask-range
   - optparse-generic
   - pipes
   - pipes-text
   - protolude
+  - scientific
   - streaming
   - streaming-bytestring
   - streaming-utils
   - text
-  - scientific
-  - distributive
-  - numhask-range
-  - numhask
-  - containers
 executables:
   pmlb-app:
     main: app.hs
@@ -72,18 +71,15 @@ executables:
     - formatting
     - generic-lens-labels
     - lens
+    - numhask-range
     - optparse-generic
     - protolude
     - streaming
     - text
-    - numhask-range
-    - numhask
-    - containers
 tests:
   test:
     main: test.hs
     source-dirs: test
     dependencies:
     - doctest
-    - tasty
     - protolude

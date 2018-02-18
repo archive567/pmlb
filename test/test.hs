@@ -10,21 +10,13 @@
 module Main where
 
 import Protolude
-import Test.Tasty (TestTree, testGroup, defaultMain)
 import Test.DocTest
 
 main :: IO ()
-main = do
+main =
   doctest
     [ "app/app.hs"
     , "src/PMLB.hs"
     , "src/PMLB/TH.hs"
     , "src/PMLB/Csv.hs"
-    ]
-  defaultMain tests
-
-tests :: TestTree
-tests =
-    testGroup ""
-    [
     ]
