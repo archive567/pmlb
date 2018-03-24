@@ -52,6 +52,7 @@ library:
   - streaming
   - streaming-bytestring
   - streaming-utils
+  - sv
   - text
 executables:
   pmlb-app:
@@ -75,6 +76,7 @@ executables:
     - optparse-generic
     - protolude
     - streaming
+    - sv
     - text
 tests:
   test:

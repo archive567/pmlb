@@ -1,4 +1,4 @@
-resolver: nightly-2018-02-17
+resolver: nightly-2018-03-07
 
 packages:
 - .
@@ -8,3 +8,4 @@ extra-deps:
   - streaming-0.2.0.0
   - git: https://github.com/haskell-streaming/streaming-utils.git
     commit: 507ebc629c6b40179af5707eb337eff2fd4c3eef
+  - sv-0.1

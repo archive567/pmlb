@@ -28,6 +28,7 @@ module PMLB.Csv
   , cols
   , parseCols
   , streamCsv_
+  , streamSv_
   ) where
 
 import Data.Attoparsec.ByteString.Char8 as AC
@@ -41,6 +42,8 @@ import qualified Data.ByteString.Streaming.Char8 as B
 import Flow
 import qualified Control.Foldl as L
 import Data.Distributive (distribute)
+import qualified Data.Sv as D
+import qualified Data.Sv.Decode as D
 
 -- * low-level generic csv parser helpers
 
@@ -236,6 +239,20 @@ streamCsvBody_ :: Monad m
   -> b
 streamCsvBody_ n c p s bs = bs |> parsed (p c) |> S.take n |> s
 
+-- | sv version
+-- | run a stream computation over n rows of the body of a csv
+-- >>> streamCsvBody_ 2 ',' doubles S.toList_ (B.fromStrict "0,1\n2,3\n4,5\n")
+-- [[0.0,1.0],[2.0,3.0]]
+--
+streamSvBody_ :: Monad m
+  => Int
+  -> Char
+  -> D.Decode' ByteString a
+  -> (S.Stream (S.Of a) m () -> b)
+  -> B.ByteString m r
+  -> b
+streamSvBody_ n c p s bs = undefined -- bs |> parsed (p c) |> S.take n |> s
+
 -- | skip over a header row
 skipHead :: Monad m => Char -> B.ByteString m r -> m (B.ByteString m r)
 skipHead c bs = bs |> S.parse (record c) |> fmap snd
@@ -300,6 +317,27 @@ streamCsv_ h n c p s bs =
       bs' <- skipHead c bs
       streamCsvBody_ n c p s bs'
     NoHeader -> streamCsvBody_ n c p s bs
+
+
+-- | sv version
+-- | run a stream computation over n rows of a csv, skipping a header row, if one exists, bypassing all errors
+-- >>>  streamCsv_ HasHeader 2 ',' doubles S.toList_ (B.fromStrict "h1,h2\n0,1\n2,3\n4,5\n")
+-- [[0.0,1.0],[2.0,3.0]]
+--
+streamSv_ :: Monad m
+  => Header
+  -> Int
+  -> Char
+  -> D.Decode' ByteString a
+  -> (S.Stream (S.Of a) m () -> m b)
+  -> B.ByteString m r
+  -> m b
+streamSv_ h n c d s bs =
+  case h of
+    HasHeader -> do
+      bs' <- skipHead c bs
+      streamSvBody_ n c d s bs'
+    NoHeader -> streamSvBody_ n c d s bs
 
 -- | compression helper for a list of indexes
 data Skippy = Skip Int | Retain Int deriving (Show)

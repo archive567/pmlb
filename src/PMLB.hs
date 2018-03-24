@@ -40,7 +40,7 @@ import Flow ((.>), (|>))
 import NumHask.Prelude
 import NumHask.Range
 import Options.Generic (ParseField)
-import PMLB.Csv
+import PMLB.Csv as C
 import PMLB.DataSets
 import Streaming.Zip (gunzip)
 import System.Directory (doesFileExist)
@@ -56,6 +56,8 @@ import qualified Pipes.Prelude as P
 import qualified Streaming.Prelude as S
 import qualified Data.Map as Map
 import qualified Data.Attoparsec.ByteString.Streaming as S
+import Data.Sv as D
+import qualified Data.Sv.Decode as D
 
 data SetType
   = Classification
@@ -115,6 +117,14 @@ tsep cfg = cfg ^. #csep |> Text.singleton
 
 bsep :: Config -> ByteString
 bsep cfg = cfg ^. #csep |> C.singleton
+
+svOpts :: Config -> ParseOptions ByteString
+svOpts c = defaultParseOptions |> separator .~ (c ^. #csep)
+
+svParser :: SvParser ByteString
+svParser = attoparsecByteString
+
+
 
 -- | resources
 withUrlStream :: String -> Managed (B.ByteString IO ())
@@ -187,6 +197,14 @@ runProducer cfg p = P.unfoldr S.next .> p |> runLine cfg
 runRows :: Config -> Int -> (Char -> AC.Parser a) -> (S.Stream (S.Of a) IO () -> IO r) -> IO r
 runRows cfg n p s = runBS cfg (streamCsv_ HasHeader n (cfg ^. #csep) p s)
 
+-- | sv version
+-- | taking a parser, run a stream computation over n rows
+-- >>> runRows def 2 doubles S.toList_ |> fmap (fmap (take 4))
+-- [[39.02,36.49,38.2,38.85],[1.83,1.71,1.77,1.77]]
+--
+runRows' :: Config -> Int -> Decode' ByteString a -> (S.Stream (S.Of a) IO () -> IO r) -> IO r
+runRows' cfg n d s = runBS cfg (streamSv_ HasHeader n (cfg ^. #csep) d s)
+
 -- | taking a parser, run a foldl over n rows
 -- >>> runFold def 1000 doubles rangeFold |> fmap (drop 95)
 -- [Range 0.89 112037.22,Range 0.89 115110.42,Range 0.86 116431.96,Range 0.91 113291.96,Range 0.89 114533.76,Range 0.0 1.0]
@@ -223,7 +241,7 @@ bsAll :: Monad m
   -> B.ByteString m ()
   -> m (Either (Text, ByteString) [[ByteString]])
 bsAll cfg bs = do
-  res <- parseCsvBody (csep cfg) (cfg ^. #errStream) record bs
+  res <- parseCsvBody (csep cfg) (cfg ^. #errStream) C.record bs
   case res of
     Left err -> pure $ Left err
     Right (bss, _) -> pure $ Right bss
@@ -243,7 +261,7 @@ bsAll cfg bs = do
 --
 bsCheck :: (Monad m) => Config -> Int -> B.ByteString m r -> m (Either Text (Int,Int))
 bsCheck cfg n bs = do
-  res <- parseCsv_ NoHeader n (csep cfg) record bs
+  res <- parseCsv_ NoHeader n (csep cfg) C.record bs
   case res of
     [] -> "empty: prolly a parser issue" |> Left |> pure
     (x:xs) -> if all (\y -> length y == length x) xs
