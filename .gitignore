@@ -8,3 +8,4 @@ TAGS
 /pmlb.cabal
 /other/classification/.DS_Store
 /other/regression/.DS_Store
+/dist-newstyle/

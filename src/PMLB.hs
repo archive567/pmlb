@@ -102,7 +102,7 @@ url cfg =
   Text.toLower (show (cfg ^. #dataType)) <> "/" <>
   cfg ^. #dataSet <> "/" <>
   cfg ^. #dataSet <>
-  cfg^. #suffixRemote |>
+  cfg ^. #suffixRemote |>
   Text.unpack
 
 file :: Config -> FilePath
