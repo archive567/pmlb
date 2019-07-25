@@ -64,7 +64,7 @@ frequency counts for discrete columns
 recipe
 ------
 
-    stack build --test --exec "$(stack path --local-install-root)/bin/pmlb-app" --exec "$(stack path --local-bin)/pandoc -f markdown -i other/header.md app/readme.md other/footer.md -t html -o index.html --filter pandoc-include --mathjax" --exec "$(stack path --local-bin)/pandoc -f markdown -i app/readme.md -t markdown -o readme.md --filter pandoc-include --mathjax" --file-watch
+    stack build --test --exec "$(stack path --local-install-root)/bin/pmlb-app" --file-watch
 
 reference
 =========

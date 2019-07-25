@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedLabels #-}
@@ -38,7 +39,7 @@ import Data.Scientific
 import Data.String (String)
 import Flow ((.>), (|>))
 import NumHask.Prelude
-import NumHask.Range
+-- import NumHask.Data.Range
 import Options.Generic (ParseField)
 import PMLB.Csv as C
 import PMLB.DataSets
@@ -57,7 +58,7 @@ import qualified Streaming.Prelude as S
 import qualified Data.Map as Map
 import qualified Data.Attoparsec.ByteString.Streaming as S
 import Data.Sv as D
-import qualified Data.Sv.Decode as D
+-- import qualified Data.Sv.Decode as D
 
 data SetType
   = Classification
@@ -288,7 +289,7 @@ isDiscrete (Binary _) = False
 
 -- fromNames :: [Text] -> Map.Map Text Int
 
-rangeFold :: (BoundedField a, Ord a, FromInteger a) => L.Fold [a] [Range a]
+rangeFold :: (BoundedJoinSemiLattice a, BoundedMeetSemiLattice a, Ord a, FromInteger a) => L.Fold [a] [Range a]
 rangeFold = L.Fold step [] identity
   where
     step [] as = (\a -> Range a a) <$> as

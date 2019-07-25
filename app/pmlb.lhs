@@ -1,3 +1,5 @@
+\begin{code}
+
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -17,11 +19,13 @@ import Formatting
 import Options.Generic
 import PMLB
 import Protolude hiding ((%))
-import Test.QuickCheck
+import Test.QuickCheck hiding (output)
 import qualified Data.Text as Text
 import qualified Streaming.Prelude as S
 import PMLB.Csv
-import NumHask.Range
+import NumHask.Data.Range
+import Readme.Lhs
+
 instance ParseRecord (Opts Wrapped)
 
 -- $setup
@@ -74,31 +78,36 @@ main = do
   ranges <- runFold arb 1000 doubles rangeFold
   freqs <- discreteFreqCounts arb 5
   putStrLn (ds <> " 👍" :: Text)
-  writeFile "other/uptohere.md" <| Text.unlines <|
-    [ "random dataset:"
-    , sformat
-      ("[" %stext % "](" %stext % ")")
-      (cfg ^. #dataSet)
-      (Text.pack (url cfg))
-    , ""
-    , "rectangle check (max 1000 lines):"
-    , show recs
-    , ""
-    , "first few lines:"
-    ] <> codeWrap res <>
-    [ ""
-    , "ranges"
-    ] <> codeWrap
-    [ tabify (["column:"] <> hs)
-    , tabify (["min:"] <> (show <$> (\(Range l _) -> l) <$> ranges))
-    , tabify (["max:"] <> (show <$> (\(Range _ u) -> u) <$> ranges))
-    ] <>
-    [ "frequency counts for discrete columns"
-    , ""
-    ] <> codeWrap (show <$> freqs)
 
-codeWrap :: [Text] -> [Text]
-codeWrap ts = ["", "```"] <> ts <> ["```", ""]
+  void $ runOutput
+    ("app/app.lhs", LHS)
+    ("readme.md", GitHubMarkdown) $
+    output "results" $ Native $
+     [ plain $ "random dataset: " <> sformat
+       ("[" %stext % "](" %stext % ")")
+       (cfg ^. #dataSet)
+       (Text.pack (url cfg))
+     , plain $ "rectangle check (max 1000 lines):" <> show recs
+     , plain "first few lines"
+     , code mempty mempty (Text.intercalate "\n" res)
+     , plain "ranges"
+     , code mempty mempty $ Text.intercalate "\n"
+       [ tabify (["column:"] <> hs)
+       , tabify (["min:"] <> (show <$> (\(Range l _) -> l) <$> ranges))
+       , tabify (["max:"] <> (show <$> (\(Range _ u) -> u) <$> ranges))
+       ]
+     , plain "frequency counts for discrete columns"
+     , code mempty mempty (show freqs)
+     ]
+     where
+       tabify :: [Text] -> Text
+       tabify = Text.intercalate "\t"
 
-tabify :: [Text] -> Text
-tabify = Text.intercalate "\t"
+\end{code}
+
+
+results
+===
+
+```{.output .results}
+```

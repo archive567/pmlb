@@ -17,6 +17,5 @@ main =
   doctest
     [ "app/app.hs"
     , "src/PMLB.hs"
-    , "src/PMLB/TH.hs"
     , "src/PMLB/Csv.hs"
     ]
