@@ -5,7 +5,6 @@ TAGS
 /.DS_Store
 /src/PMLB/.DS_Store
 /.projectile
-/pmlb.cabal
 /other/classification/.DS_Store
 /other/regression/.DS_Store
 /dist-newstyle/
