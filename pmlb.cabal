@@ -61,7 +61,7 @@ library
   default-language: Haskell2010
 
 executable pmlb
-  main-is: pmlb.hs
+  main-is: app.lhs
   hs-source-dirs:
       app
   default-extensions: NegativeLiterals NoImplicitPrelude OverloadedStrings UnicodeSyntax

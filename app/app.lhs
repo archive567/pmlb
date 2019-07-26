@@ -11,6 +11,8 @@
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
+module Main where
+
 import Control.Lens hiding (Unwrapped, Wrapped, (.>), (<|), (|>), runFold)
 import Data.Default
 import Data.Generics.Labels ()

@@ -15,7 +15,7 @@ import Test.DocTest
 main :: IO ()
 main =
   doctest
-    [ "app/app.hs"
+    [ "app/app.lhs"
     , "src/PMLB.hs"
     , "src/PMLB/Csv.hs"
     ]

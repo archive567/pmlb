@@ -1,11 +1,8 @@
 /.stack-work/
 TAGS
-/other/*.md
-/other/.DS_Store
+/*/.DS_Store
 /.DS_Store
-/src/PMLB/.DS_Store
-/.projectile
-/other/classification/.DS_Store
-/other/regression/.DS_Store
 /dist-newstyle/
-*/.DS_Store
+/other/classification/*.csv
+/other/regression/*.csv
+/src/PMLB/.DS_Store
