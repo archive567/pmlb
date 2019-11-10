@@ -1,26 +1,13 @@
-resolver: lts-13.29 # nightly-2018-12-15
+resolver: lts-14.13
 
 packages:
 - .
+- ../readme-lhs
+- ../numhask-space
 
 extra-deps:
-  - Frames-0.6.1
-  - discrimination-0.4
-  - pipes-text-0.0.2.5
-  - streaming-0.2.2.0
+  # - readme-lhs-0.2.2
   - json-stream-0.4.2.4
-  - git: https://github.com/haskell-streaming/streaming-utils.git
-    commit: 507ebc629c6b40179af5707eb337eff2fd4c3eef
-  - sv-0.1
-  - git: https://github.com/tonyday567/numhask.git
-    commit: 7d0d7333b63494069f3338530cd8530ad158400f
-    subdirs:
-      - numhask
-      - numhask-prelude
-      - numhask-space
-      - numhask-hedgehog
-      - numhask-array
-  - git: https://github.com/tonyday567/readme-lhs.git
-    commit: a48c5414051f9833b84ec5a20108a0b641b21a10
+  - streaming-utils-0.2.0.0
 
 allow-newer: true
