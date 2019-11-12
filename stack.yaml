@@ -2,11 +2,10 @@ resolver: lts-14.13
 
 packages:
 - .
-- ../readme-lhs
-- ../numhask-space
 
 extra-deps:
-  # - readme-lhs-0.2.2
+  - readme-lhs-0.3.0
+  - numhask-space-0.3.0
   - json-stream-0.4.2.4
   - streaming-utils-0.2.0.0
 
