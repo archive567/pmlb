@@ -13,12 +13,15 @@
 
 module PMLB
   ( SetType (..),
-    Config (Config),
-    defaultConfig,
+    CsvConfig (..),
+    defaultCsvConfig,
+    PMLBConfig (..),
+    defaultPMLBConfig,
     url,
     file,
     tsep,
     bsep,
+    cacheUrl,
     runBS,
     runLine,
     runProducer,
@@ -63,15 +66,10 @@ data SetType
   | Regression
   deriving (Show, Generic, Eq, Read, ParseField)
 
-data Config
-  = Config
-      { urlRoot :: Text,
-        dataType :: SetType,
-        dataSet :: Text,
-        suffixRemote :: Text,
-        -- | data is stored uncompressed locally to fit in with Frames methods
-        -- since a csv file is needed locally to discover types, remote data is always cached.
-        suffixLocal :: Text,
+data CsvConfig
+  = CsvConfig
+      { dataSet :: Text,
+        suffix :: Text,
         localCache :: Text,
         csep :: Char,
         -- | length of the continuating bytestream to report on an error
@@ -83,13 +81,10 @@ data Config
       }
   deriving (Show, Generic, Eq)
 
-defaultConfig :: Config
-defaultConfig =
-  Config
-    "https://github.com/EpistasisLab/penn-ml-benchmarks/raw/master/datasets"
-    Classification
+defaultCsvConfig :: CsvConfig
+defaultCsvConfig =
+  CsvConfig
     "Hill_Valley_with_noise"
-    ".tsv.gz"
     ".csv"
     "./other"
     '\t'
@@ -97,31 +92,52 @@ defaultConfig =
     100000
     100
 
-url :: Config -> FilePath
+data PMLBConfig =
+  PMLBConfig
+  { setType :: SetType
+  , urlRoot :: Text
+  , suffixRemote :: Text
+  , csvConfig :: CsvConfig
+  } deriving (Eq, Show, Generic)
+
+defaultPMLBConfig :: PMLBConfig
+defaultPMLBConfig =
+  PMLBConfig
+  Classification
+  "https://github.com/EpistasisLab/penn-ml-benchmarks/raw/master/datasets"
+  ".tsv.gz"
+  (CsvConfig
+    "Hill_Valley_with_noise"
+    ".csv"
+    "./other"
+    '\t'
+    500
+    100000
+    100)
+
+
+url :: PMLBConfig -> FilePath
 url cfg =
   cfg ^. #urlRoot <> "/"
-    <> Text.toLower (show (cfg ^. #dataType))
+    <> Text.toLower (show (cfg ^. #setType)) <> "/"
+    <> cfg ^. #csvConfig . #dataSet
     <> "/"
-    <> cfg ^. #dataSet
-    <> "/"
-    <> cfg ^. #dataSet
+    <> cfg ^. #csvConfig . #dataSet
     <> cfg ^. #suffixRemote
     & Text.unpack
 
-file :: Config -> FilePath
+file :: CsvConfig -> FilePath
 file cfg =
   cfg ^. #localCache
     <> "/"
-    <> Text.toLower (show $ cfg ^. #dataType)
-    <> "/"
     <> cfg ^. #dataSet
-    <> cfg ^. #suffixLocal
+    <> cfg ^. #suffix
       & Text.unpack
 
-tsep :: Config -> Text
+tsep :: CsvConfig -> Text
 tsep cfg = cfg ^. #csep & Text.singleton
 
-bsep :: Config -> ByteString
+bsep :: CsvConfig -> ByteString
 bsep cfg = cfg ^. #csep & C.singleton
 
 -- | resources
@@ -138,31 +154,38 @@ withFileAppend f = managed (withFile f AppendMode)
 withFileStream :: MonadIO m => FilePath -> Managed (B.ByteString m ())
 withFileStream fp = managed $ \f -> withFile fp ReadMode (f . B.hGetContents)
 
-toCache :: Config -> IO ()
+toCache :: PMLBConfig -> IO ()
 toCache cfg =
   runManaged $ do
     inUrl <- withUrlStream (url cfg)
-    outFile <- withFileAppend (file cfg)
+    outFile <- withFileAppend (file (cfg ^. #csvConfig))
     inUrl & gunzip & B.hPut outFile & liftIO
 
-cacheUrl :: Config -> IO ()
+cacheUrl :: PMLBConfig -> IO ()
 cacheUrl cfg = do
-  e <- file cfg & doesFileExist
+  e <- file (cfg ^. #csvConfig) & doesFileExist
   unless e (toCache cfg)
 
-withStream :: Config -> Managed (B.ByteString IO ())
-withStream cfg = do
+withStreamPMLB :: PMLBConfig -> Managed (B.ByteString IO ())
+withStreamPMLB cfg = do
   liftIO $ cacheUrl cfg
-  withFileStream (file cfg)
+  withFileStream (file (cfg ^. #csvConfig))
 
 -- * continuation processing
 
 -- | bytestring stream continuation
 --
--- >>> bytes & runBS defaultConfig
+-- >>> bytes & runBS defaultCsvConfig
 -- 839165
-runBS :: Config -> (B.ByteString IO () -> IO r) -> IO r
-runBS cfg = with (withStream cfg)
+runBS :: CsvConfig -> (B.ByteString IO () -> IO r) -> IO r
+runBS cfg = with (withFileStream (file cfg))
+
+-- | bytestring stream continuation
+--
+-- >>> bytes & runBSPMLB defaultPMLBConfig
+-- 839165
+runBSPMLB :: PMLBConfig -> (B.ByteString IO () -> IO r) -> IO r
+runBSPMLB cfg = with (withStreamPMLB cfg)
 
 -- | take a ByteString (A streaming library bytestring) and make a text stream separated by the usual end-of-line conventions.
 -- this will break if the dataset includes linebreaks within a quoted text field
@@ -178,30 +201,30 @@ toLineStream n s =
 
 -- | text line continuation
 --
--- >>> (S.length >>> fmap S.fst') & runLine defaultConfig
+-- >>> (S.length >>> fmap S.fst') & runLine defaultCsvConfig
 -- 1213
-runLine :: Config -> (S.Stream (S.Of Text) IO () -> IO r) -> IO r
+runLine :: CsvConfig -> (S.Stream (S.Of Text) IO () -> IO r) -> IO r
 runLine cfg s = (toLineStream (cfg ^. #maxLines) >>> s) & runBS cfg
 
 -- | pipes line continuation
 --
--- >>> runProducer defaultConfig P.length
+-- >>> runProducer defaultCsvConfig P.length
 -- 1213
-runProducer :: Config -> (P.Producer Text IO () -> IO r) -> IO r
+runProducer :: CsvConfig -> (P.Producer Text IO () -> IO r) -> IO r
 runProducer cfg p = (P.unfoldr S.next >>> p) & runLine cfg
 
 -- | taking a parser, run a stream computation over n rows
 --
--- >>> runRows defaultConfig 2 doubles S.toList_ & fmap (fmap (take 4))
+-- >>> runRows defaultCsvConfig 2 doubles S.toList_ & fmap (fmap (take 4))
 -- [[39.02,36.49,38.2,38.85],[1.83,1.71,1.77,1.77]]
-runRows :: Config -> Int -> (Char -> AC.Parser a) -> (S.Stream (S.Of a) IO () -> IO r) -> IO r
+runRows :: CsvConfig -> Int -> (Char -> AC.Parser a) -> (S.Stream (S.Of a) IO () -> IO r) -> IO r
 runRows cfg n p s = runBS cfg (streamCsv_ HasHeader n (cfg ^. #csep) p s)
 
 -- | taking a parser, run a foldl over n rows
 --
--- >>> runFold defaultConfig 1000 doubles rangeFold & fmap (drop 95)
+-- >>> runFold defaultCsvConfig 1000 doubles rangeFold & fmap (drop 95)
 -- [Range 0.89 112037.22,Range 0.89 115110.42,Range 0.86 116431.96,Range 0.91 113291.96,Range 0.89 114533.76,Range 0.0 1.0]
-runFold :: Config -> Int -> (Char -> AC.Parser a) -> L.Fold a b -> IO b
+runFold :: CsvConfig -> Int -> (Char -> AC.Parser a) -> L.Fold a b -> IO b
 runFold cfg n p f = runBS cfg (streamCsv_ HasHeader n (cfg ^. #csep) p (L.purely S.fold f >>> fmap S.fst'))
 
 -- * various computation streams
@@ -210,22 +233,22 @@ runFold cfg n p f = runBS cfg (streamCsv_ HasHeader n (cfg ^. #csep) p (L.purely
 bytes :: B.ByteString IO () -> IO Int
 bytes s = s & B.length & fmap S.fst'
 
-instance Arbitrary Config where
+instance Arbitrary PMLBConfig where
   arbitrary =
     frequency
       [ ( 1,
-          (\x -> defaultConfig & #dataType .~ Classification & #dataSet .~ x)
+          (\x -> defaultPMLBConfig & #setType .~ Classification & #csvConfig . #dataSet .~ x)
             <$> elements classificationNames
         ),
         ( 1,
-          (\x -> defaultConfig & #dataType .~ Regression & #dataSet .~ x)
+          (\x -> defaultPMLBConfig & #setType .~ Regression & #csvConfig . #dataSet .~ x)
             <$> elements regressionNames
         )
       ]
 
 -- | records of a csv as raw bytestrings
 --
--- >>> (Right recs) <- runBS defaultConfig (bsAll defaultConfig)
+-- >>> (Right recs) <- runBS defaultCsvConfig (bsAll defaultCsvConfig)
 -- >>> recs & all (length >>> (== 101))
 -- True
 --
@@ -233,7 +256,7 @@ instance Arbitrary Config where
 -- 1213
 bsAll ::
   Monad m =>
-  Config ->
+  CsvConfig ->
   B.ByteString m () ->
   m (Either (Text, ByteString) [[ByteString]])
 bsAll cfg bs = do
@@ -244,19 +267,19 @@ bsAll cfg bs = do
 
 -- check bytestring for rectangularity
 --
--- >>> bsCheck defaultConfig 100 (B.fromLazy "a\tb\tc\nd\te\tf\n")
+-- >>> bsCheck defaultCsvConfig 100 (B.fromLazy "a\tb\tc\nd\te\tf\n")
 -- Right (2,3)
 --
--- >>>  bsCheck defaultConfig 100 (B.fromLazy "a\tb\tc\nd\te\n")
+-- >>>  bsCheck defaultCsvConfig 100 (B.fromLazy "a\tb\tc\nd\te\n")
 -- Left "non-equal record length"
 --
--- >>> bsCheck defaultConfig 100 (B.fromLazy "")
+-- >>> bsCheck defaultCsvConfig 100 (B.fromLazy "")
 -- Left "empty: "
 --
--- >>> bsCheck defaultConfig 100 (B.fromLazy "\n")
+-- >>> bsCheck defaultCsvConfig 100 (B.fromLazy "\n")
 -- Right (1,1)
 --
-bsCheck :: (Monad m) => Config -> Int -> B.ByteString m r -> m (Either Text (Int, Int))
+bsCheck :: (Monad m) => CsvConfig -> Int -> B.ByteString m r -> m (Either Text (Int, Int))
 bsCheck cfg n bs = do
   res <- parseCsv_ NoHeader n (csep cfg) C.record bs
   case res of
@@ -284,15 +307,13 @@ isDiscrete (Discrete _) = True
 isDiscrete (Continuous _) = False
 isDiscrete (Binary _) = False
 
--- fromNames :: [Text] -> Map.Map Text Int
-
 rangeFold :: (Ord a) => L.Fold [a] [Range a]
 rangeFold = L.Fold step [] id
   where
     step [] as = (\a -> Range a a) <$> as
     step rs as = zipWith (<>) rs $ (\a -> Range a a) <$> as
 
-discreteCols :: Config -> Int -> IO [Int]
+discreteCols :: CsvConfig -> Int -> IO [Int]
 discreteCols cfg n = do
   rs <- runBS cfg (parseCsv_ HasHeader n (cfg ^. #csep) scis)
   rs & transpose & fmap (all (isDiscrete . toV))
@@ -311,11 +332,11 @@ countsFold n = L.Fold step (replicate n Map.empty) identity
   where
     step = zipWith (\x a -> Map.insertWith (+) a 1 x)
 
-nrows :: Config -> IO Int
+nrows :: CsvConfig -> IO Int
 nrows cfg =
   runBS cfg (parseCsvHeader_ (cfg ^. #csep)) & fmap length
 
-discreteFreqCounts :: Config -> Int -> IO [(Text, [(Scientific, Int)])]
+discreteFreqCounts :: CsvConfig -> Int -> IO [(Text, [(Scientific, Int)])]
 discreteFreqCounts cfg topn = do
   nr <- nrows cfg
   dc <- discreteCols cfg (cfg ^. #firstRows)
