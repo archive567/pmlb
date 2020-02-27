@@ -37,7 +37,6 @@ import Data.Attoparsec.ByteString.Streaming as S
 import Data.ByteString (ByteString)
 import qualified Data.ByteString.Char8 as C
 import qualified Data.ByteString.Streaming.Char8 as B
-import Data.Distributive (distribute)
 import Data.Scientific
 import Protolude
 import qualified Streaming.Prelude as S
@@ -143,13 +142,15 @@ parseCsvFull h c n p bs =
           r <- parseCsvBody c n p bs'
           case r of
             Left err -> pure $ Left err
-            Right (rs, r) -> pure $ Right (heads, rs, r)
+            Right (rs, r') -> pure $ Right (heads, rs, r')
     NoHeader -> do
       r <- parseCsvBody c n p bs
       case r of
         Left err -> pure $ Left err
-        Right (rs, r) -> pure $ Right ([], rs, r)
+        Right (rs, r') -> pure $ Right ([], rs, r')
 
+grab :: (Monad m, Integral a) =>
+              B.ByteString m r -> a -> m ByteString
 grab b n = b & B.take (fromIntegral n) & B.toStrict & fmap S.fst'
 
 -- | parse the body of a csv
@@ -197,7 +198,7 @@ parseCsvHeader_ ::
   B.ByteString m r ->
   m [Text]
 parseCsvHeader_ c bs = do
-  (eHeaders, bs') <- bs & S.parse (record c)
+  (eHeaders, _) <- bs & S.parse (record c)
   case eHeaders of
     Right _ -> pure []
     Left heads -> decodeUtf8 <$> heads & pure

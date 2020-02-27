@@ -6,3 +6,4 @@ TAGS
 /other/classification/*.csv
 /other/regression/*.csv
 /src/PMLB/.DS_Store
+other/*.csv
