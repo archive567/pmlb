@@ -10,7 +10,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wall #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
-
+ 
 module PMLB
   ( SetType (..),
     CsvConfig (..),
@@ -34,7 +34,7 @@ module PMLB
     discreteFreqCounts,
   )
 where
-
+ 
 import Control.Category (id, (>>>))
 import qualified Control.Foldl as L
 import Control.Lens hiding (Unwrapped, Wrapped, elements, runFold, (|>))
