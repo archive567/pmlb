@@ -39,12 +39,6 @@ data SetType
   | Regression
   deriving (Show, Generic, Eq, Read, ParseField)
 
-{-
-    500
-    100000
-    100
--}
-
 data PMLBConfig =
   PMLBConfig
   { setType :: SetType
