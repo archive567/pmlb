@@ -9,13 +9,12 @@
 
 module Main where
 
-import Protolude
+import NumHask.Prelude
 import Test.DocTest
 
 main :: IO ()
 main =
   doctest
     [ "app/app.hs",
-      "src/PMLB.hs",
-      "src/PMLB/Csv.hs"
+      "src/PMLB.hs"
     ]

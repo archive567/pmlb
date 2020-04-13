@@ -1,12 +1,16 @@
 resolver: lts-15.6
 
 packages:
-- .
+  - .
+  - ../online-csv
 
 extra-deps:
   - readme-lhs-0.5.0
   - numhask-space-0.3.1
   - json-stream-0.4.2.4
   - streaming-utils-0.2.0.0
+  - box-0.3.0
+  - numhask-prelude-0.3.3
+  - text-format-0.3.2
 
 allow-newer: true

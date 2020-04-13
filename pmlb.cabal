@@ -23,8 +23,6 @@ source-repository head
 library
   exposed-modules:
       PMLB
-      PMLB.DataSets
-      PMLB.Csv
   hs-source-dirs:
       src
   default-extensions: NegativeLiterals NoImplicitPrelude OverloadedStrings UnicodeSyntax
@@ -41,10 +39,11 @@ library
     , generic-lens
     , lens
     , managed
+    , numhask-prelude
     , numhask-space
+    , online-csv
     , optparse-generic
     , pipes
-    , protolude
     , scientific
     , streaming
     , streaming-bytestring
@@ -64,10 +63,11 @@ executable pmlb
     , generic-lens
     , lens
     , numhask-space
+    , online-csv
     , optparse-generic
     , pmlb
     , pretty-simple
-    , protolude
+    , numhask-prelude
     , readme-lhs
     , text
   default-language: Haskell2010
@@ -75,13 +75,11 @@ executable pmlb
 test-suite test
   type: exitcode-stdio-1.0
   main-is: test.hs
-  other-modules:
-      Paths_pmlb
   hs-source-dirs:
       test
   default-extensions: NegativeLiterals NoImplicitPrelude OverloadedStrings UnicodeSyntax
   build-depends:
       base >=4.7 && <5
     , doctest
-    , protolude
+    , numhask-prelude
   default-language: Haskell2010
