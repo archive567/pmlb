@@ -1,50 +1,36 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
-{-# OPTIONS_GHC -Wall #-}
-{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module PMLB
   ( SetType (..),
     PMLBConfig (..),
     defaultPMLBConfig,
-    cacheUrl,
+    -- cacheUrl,
     url,
   )
 where
  
-import Control.Lens hiding (Unwrapped, Wrapped, elements, runFold, (|>))
-import Control.Monad.Managed (Managed, managed, runManaged)
-import qualified Data.ByteString.Streaming.Char8 as B
-import qualified Data.ByteString.Streaming.HTTP as HTTP
-import Data.Generics.Labels ()
-import Data.String (String)
 import qualified Data.Text as Text
-import Options.Generic (ParseField)
+import Data.Text (Text)
 import NumHask.Prelude
-import Streaming.Zip (gunzip)
 import System.Directory (doesFileExist)
 import Test.QuickCheck (Arbitrary (..), elements, frequency)
-import Data.Csv
+import System.IO
+import Box
+import Optics.Core
 
 data SetType
   = Classification
   | Regression
-  deriving (Show, Generic, Eq, Read, ParseField)
+  deriving (Show, Generic, Eq)
 
 data PMLBConfig =
   PMLBConfig
   { setType :: SetType
-  , urlRoot :: Text
-  , suffixRemote :: Text
-  , csvConfig :: CsvConfig
+  , urlRoot :: String
+  , suffixRemote :: String
+  , name :: String
   } deriving (Eq, Show, Generic)
 
 defaultPMLBConfig :: PMLBConfig
@@ -53,61 +39,64 @@ defaultPMLBConfig =
   Classification
   "https://github.com/EpistasisLab/penn-ml-benchmarks/raw/master/datasets"
   ".tsv.gz"
-  (CsvConfig
-    "Hill_Valley_with_noise"
-    ".csv"
-    "./other"
-    '\t'
-    NoHeader)
+  "Hill_Valley_with_noise"
 
 url :: PMLBConfig -> FilePath
-url cfg =
+url cfg = undefined
+
+{-
   cfg ^. #urlRoot <> "/"
     <> Text.toLower (show (cfg ^. #setType)) <> "/"
     <> cfg ^. #csvConfig . #name
     <> "/"
     <> cfg ^. #csvConfig . #name
     <> cfg ^. #suffixRemote
-    & Text.unpack
+-}
 
 -- | resources
 toCache :: PMLBConfig -> IO ()
-toCache cfg =
+toCache cfg = undefined
+{-
   runManaged $ do
     inUrl <- withUrlStream (url cfg)
     outFile <- withFileAppend (file (cfg ^. #csvConfig))
     inUrl & gunzip & B.hPut outFile & liftIO
+-}
 
+{-
 cacheUrl :: PMLBConfig -> IO ()
 cacheUrl cfg = do
   e <- file (cfg ^. #csvConfig) & doesFileExist
   unless e (toCache cfg)
+-}
 
-withUrlStream :: String -> Managed (B.ByteString IO ())
-withUrlStream u =
+-- withUrlStream u = undefined
+
+{-
   managed $ \f -> do
     req <- HTTP.parseRequest u
     man <- HTTP.newManager HTTP.tlsManagerSettings
     HTTP.withHTTP req man $ \resp -> f (HTTP.responseBody resp)
 
-withFileAppend :: FilePath -> Managed Handle
-withFileAppend f = managed (withFile f AppendMode)
+    -}
+
+-- withFileAppend f = managed (withFile f AppendMode)
 
 -- * various computation streams
 instance Arbitrary PMLBConfig where
   arbitrary =
     frequency
       [ ( 1,
-          (\x -> defaultPMLBConfig & #setType .~ Classification & #csvConfig . #name .~ x)
-            <$> elements classificationNames
+          (\x -> defaultPMLBConfig & #setType .~ Classification & #name .~ x)
+            <$> Test.QuickCheck.elements classificationNames
         ),
         ( 1,
-          (\x -> defaultPMLBConfig & #setType .~ Regression & #csvConfig . #name .~ x)
-            <$> elements regressionNames
+          (\x -> defaultPMLBConfig & #setType .~ Regression & #name .~ x)
+            <$> Test.QuickCheck.elements regressionNames
         )
       ]
 
-classificationNames :: [Text]
+classificationNames :: [String]
 classificationNames = [
     "GAMETES_Epistasis_2-Way_1000atts_0.4H_EDM-1_EDM-1_1",
     "GAMETES_Epistasis_2-Way_20atts_0.1H_EDM-1_1",
@@ -277,7 +266,7 @@ classificationNames = [
     "yeast"
     ]
 
-regressionNames :: [Text]
+regressionNames :: [String]
 regressionNames = [
     "1027_ESL",
     "1028_SWD",

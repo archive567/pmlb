@@ -1,7 +1,0 @@
-- package:
-  - name: pmlb
-  - section:
-    - name: test:test
-    - message:
-      - name: Redundant build-depends entry
-      - depends: base
